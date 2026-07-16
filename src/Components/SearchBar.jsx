@@ -1,11 +1,11 @@
 import React from 'react';
 
-function searchBar() {
+function SearchBar() {
 
     return (
     <div>
-        <input type="text" name="searchBar" />;
-        <button name="search">Search</button>
+        <input placeholder='Enter A Song, Artist, or Album'/>
+        <button>Search</button>
     </div>
     );
 }

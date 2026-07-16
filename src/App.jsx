@@ -7,10 +7,18 @@ function App() {
   return (
 
     <div>
-      
-    </div>
-  );
+      <h1>Ja<span style={{color:'purple'}}>mmm</span>ing</h1>
 
+      <SearchBar />
+
+      <div>
+        <SearchResults />
+        <Playlist />
+      </div>
+
+    </div>
+
+  );
 }
 
 export default App; 
