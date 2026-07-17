@@ -4,10 +4,10 @@ import Tracklist from "./Tracklist";
 function Playlist() {
 
     return (
-        <div>
+        <div className="playlist-container">
             <h2>Playlist</h2>
-            <Tracklist />
-            <button>SAVE TO SPOTIFY</button>
+            <Tracklist tracks={[]} />
+            <button className="search-button">SAVE TO SPOTIFY</button>
         </div>
     );
 
