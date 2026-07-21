@@ -24,7 +24,7 @@ function Playlist(props) {
             />
 
             <div className="search-container">
-                <button className="search-button">SAVE TO SPOTIFY</button>     
+                <button className="search-button" onClick={props.onSave}>SAVE TO SPOTIFY</button>     
             </div> 
         </div>
     );
