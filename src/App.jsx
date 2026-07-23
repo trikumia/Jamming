@@ -27,9 +27,21 @@ function App() {
     {id:"10", name:"Welcome to the Jungle", artist:"Guns n Roses", album:"Appetite for Destruction", uri:"spotify:track:10"}
   ]);
 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+
   const searchTracks = async (searchTerm) => {
+    const searchTermClean = (searchTerm || "").trim();
+
+    console.log("searchTracks called:", JSON.stringify(searchTermClean));
    
-    if (!searchTerm) return;
+    if (!searchTermClean) {
+      setErrorMessage("Please enter a song, artist, or album.");
+      setShowErrorPopup(true);
+      return;
+    }
+    setErrorMessage("");
+    setShowErrorPopup(false);
 
     const token = await Spotify.getAccessToken();
     if (!token) {
@@ -38,7 +50,8 @@ function App() {
     }
 
     try {
-      const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchTerm)}&type=track`, {
+      const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchTermClean)}&type=track`,
+      {
         headers: {
           Authorization: `Bearer ${token}`
         },
@@ -149,6 +162,14 @@ function App() {
       </header>
 
       <SearchBar onSearch={searchTracks}/>
+      {showErrorPopup && (
+        <div className="modal-overlay">
+          <div className="modal-window">
+            <p>{errorMessage}</p>
+            <button onClick={() => setShowErrorPopup(false)}>Close</button>
+          </div>
+        </div>
+      )}
 
       <div className="main-layout-container">
         <SearchResults searchResults={searchResults} onAdd={addTrack}/>
