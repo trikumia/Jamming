@@ -3,6 +3,7 @@ import SearchBar from "./Components/SearchBar";
 import SearchResults from "./Components/SearchResults";
 import Playlist from "./Components/Playlist";
 import "./App.css";
+import * as Spotify from "./Spotify";
 
 function App() {
   const [playlistName, setPlaylistName] = useState('My Playlist');
@@ -27,8 +28,14 @@ function App() {
   ]);
 
   const searchTracks = async (searchTerm) => {
-    const token = "BQCrRwuyEhUy-SUDH-2gkrqrXzcLjDBkiiXuwz-IWyjm0HKuuDaV5J7stIruAWhYC9GjBsf1TongToou0zeqitSP9vmo_dA8AF5m9XvO0FT9BI---cRFBml3SB3gTANbjXvYXy4NBP9vlFDljch6_v6FdrKX_BcElzAEpx_bbQDdUP-CuNVgaurtwj30xU3NxcE7uEcLVrOAIIIlhQY4BzxEhUOB-hzJY8d_WQesjQ_pgyFuvk_CSV6ubXrG330ZpoU7YushwZlBycpU8FSi0LKTltXSIYf5VZvjrV0SlV2zBkwULtqGcrnj0CoCP1yCrLdRAGg7vNapUeF0pNoYA8lAx-VkabZazl7bGsa1_wnGV4kJXqNwCePulyotdrdm-odUUVjyxrFRYcHaXuptWWSil5YF4A";
+   
     if (!searchTerm) return;
+
+    const token = Spotify.getAccessToken();
+    if (!token) {
+      Spotify.authorize();
+      return; // Exit the function if the user is redirected for authorization
+    }
 
     try {
       const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchTerm)}&type=track`, {
@@ -74,7 +81,11 @@ function App() {
   };
 
   const savePlaylist = async () => {
-    const token = "BQCrRwuyEhUy-SUDH-2gkrqrXzcLjDBkiiXuwz-IWyjm0HKuuDaV5J7stIruAWhYC9GjBsf1TongToou0zeqitSP9vmo_dA8AF5m9XvO0FT9BI---cRFBml3SB3gTANbjXvYXy4NBP9vlFDljch6_v6FdrKX_BcElzAEpx_bbQDdUP-CuNVgaurtwj30xU3NxcE7uEcLVrOAIIIlhQY4BzxEhUOB-hzJY8d_WQesjQ_pgyFuvk_CSV6ubXrG330ZpoU7YushwZlBycpU8FSi0LKTltXSIYf5VZvjrV0SlV2zBkwULtqGcrnj0CoCP1yCrLdRAGg7vNapUeF0pNoYA8lAx-VkabZazl7bGsa1_wnGV4kJXqNwCePulyotdrdm-odUUVjyxrFRYcHaXuptWWSil5YF4A";
+    const token = Spotify.getAccessToken();
+    if (!token) {
+      Spotify.authorize();
+      return; // Exit the function if the user is redirected for authorization
+    }   
     const trackUris = playlistTracks.map((track) => track.uri);
     
     try {
