@@ -31,7 +31,7 @@ function App() {
    
     if (!searchTerm) return;
 
-    const token = Spotify.getAccessToken();
+    const token = await Spotify.getAccessToken();
     if (!token) {
       Spotify.authorize();
       return; // Exit the function if the user is redirected for authorization
@@ -81,9 +81,9 @@ function App() {
   };
 
   const savePlaylist = async () => {
-    const token = Spotify.getAccessToken();
+    const token = await Spotify.getAccessToken();
     if (!token) {
-      Spotify.authorize();
+      await Spotify.authorize();
       return; // Exit the function if the user is redirected for authorization
     }   
     const trackUris = playlistTracks.map((track) => track.uri);
