@@ -1,5 +1,4 @@
 const CLIENT_ID = "c7ce8efb5bde49b0a7ebb8ee239debae";
-const REDIRECT_URI = "http://127.0.0.1:5173/callback";
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 const RESPONSE_TYPE = "code";
@@ -10,6 +9,8 @@ const SCOPES = [
 
 let accessToken = "";
 let tokenExpirationTime = 0;
+
+const getRedirectUri = () => `${window.location.origin}/callback`;
 
 const generateRandomString = (length = 128) => {
   const array = new Uint8Array(length);
@@ -36,7 +37,8 @@ const sha256 = async (plain) => {
 
 const buildAuthUrl = (codeChallenge) => {
     const scope = encodeURIComponent(SCOPES.join(" "));
-    return `${AUTH_ENDPOINT}?client_id=${encodeURIComponent(CLIENT_ID)}&response_type=${RESPONSE_TYPE}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scope}&code_challenge_method=S256&code_challenge=${encodeURIComponent(codeChallenge)}`;
+    const redirectUri = encodeURIComponent(getRedirectUri());
+    return `${AUTH_ENDPOINT}?client_id=${encodeURIComponent(CLIENT_ID)}&response_type=${RESPONSE_TYPE}&redirect_uri=${redirectUri}&scope=${scope}&code_challenge_method=S256&code_challenge=${encodeURIComponent(codeChallenge)}`;
 };
 
 const clearUrlQuery = () => {
@@ -54,12 +56,13 @@ const setAccessTokenFromCode = async () => {
     if (!code) return null;
 
     const verifier = sessionStorage.getItem("spotify_code_verifier");
-    if (!verifier) return null;
-
+    if (!verifier){
+        throw new Error("Spotify PKCE verifier was not found. Please try again.");
+        }
     const body = new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: getRedirectUri(),
         client_id: CLIENT_ID,
         code_verifier: verifier,   
     });
@@ -72,8 +75,20 @@ const setAccessTokenFromCode = async () => {
         body: body.toString(),
     });
 
-      if (!response.ok) {
-    throw new Error("Failed to exchange authorization code for token");
+    if (!response.ok) {
+    let errorMessage = `Spotify token exchange failed with status ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage += `: ${errorData.error_description || errorData.error || "unknown error"}`;
+    } catch {
+      const errorText = await response.text();
+      errorMessage += `: ${errorText}`;
+    }
+
+    sessionStorage.removeItem("spotify_code_verifier");
+    clearUrlQuery();
+    
+    throw new Error(errorMessage);
   }
 
     const data = await response.json();

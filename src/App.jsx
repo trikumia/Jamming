@@ -29,12 +29,12 @@ function App() {
 
   const [errorMessage, setErrorMessage] = useState("");
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const searchTracks = async (searchTerm) => {
     const searchTermClean = (searchTerm || "").trim();
 
-    console.log("searchTracks called:", JSON.stringify(searchTermClean));
-   
     if (!searchTermClean) {
       setErrorMessage("Please enter a song, artist, or album.");
       setShowErrorPopup(true);
@@ -43,11 +43,48 @@ function App() {
     setErrorMessage("");
     setShowErrorPopup(false);
 
-    const token = await Spotify.getAccessToken();
-    if (!token) {
-      Spotify.authorize();
-      return; // Exit the function if the user is redirected for authorization
+    let token = null;
+
+    try{
+      token = await Spotify.getAccessToken();
+    } catch (error) {
+      console.error("Spotify auth error:", error);
+
+      if (error.message.includes("expired") || error.message.includes("invalid_grant")) {
+        setSuccessMessage("");
+        setShowSuccessPopup(false);
+        setErrorMessage("Spotify login expired. Please sign in again.");
+        setShowErrorPopup(true)
+
+        try {
+          await Spotify.authorize();
+        } catch (authError) {
+          console.error("Authorize error:", authError);
+          setErrorMessage("Could not start Spotify authorization.");
+          setShowErrorPopup(true);
+          }
+          return;
+        }
+
+      setSuccessMessage("");
+      setShowSuccessPopup(false);
+      setErrorMessage(error.message || "Spotify authorization failed.");
+      setShowErrorPopup(true);
+      return;    
     }
+
+    if (!token) {
+    setErrorMessage("Spotify authorization is required to search.");
+    setShowErrorPopup(true);
+    try {
+      await Spotify.authorize();
+    } catch (authError){
+      console.error("Authorize error:", authError);
+      setErrorMessage("Could not start Spotify authorization.");
+      setShowErrorPopup(true);      
+    }
+    return;
+  }
 
     try {
       const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchTermClean)}&type=track`,
@@ -73,6 +110,8 @@ function App() {
     setSearchResults(tracks);
   } catch (error) {
     console.error("Search Error:", error.message);
+    setErrorMessage(error.message || "Search failed.");
+    setShowErrorPopup(true);
   }
   };
 
@@ -94,11 +133,64 @@ function App() {
   };
 
   const savePlaylist = async () => {
-    const token = await Spotify.getAccessToken();
-    if (!token) {
-      await Spotify.authorize();
-      return; // Exit the function if the user is redirected for authorization
-    }   
+    const trimmedPlaylistName = (playlistName || "").trim();
+    const hasTracks = playlistTracks.length > 0;
+
+    if (!trimmedPlaylistName || !hasTracks) {
+      setErrorMessage("Please enter a Playlist name and add at least one track before saving");
+      setShowErrorPopup(true);
+      return;
+    }
+
+    setErrorMessage("");
+    setShowErrorPopup(false);
+    setSuccessMessage("Saving playlist...");
+    setShowSuccessPopup(false);
+
+    let token = null;
+
+    try {
+      token = await Spotify.getAccessToken();
+      } catch (error) {
+        console.error("Spotify auth error:", error);
+
+        if (error.message.includes("expired") || error.message.includes("invalid_grant")) {
+          setSuccessMessage("");
+          setShowSuccessPopup(false);
+          setErrorMessage("Spotify login expired. Please sign in again.");
+          setShowErrorPopup(true);
+          try {
+            await Spotify.authorize();
+          } catch (authError) {
+            console.error("Authorize error:", authError);
+            setErrorMessage("Could not start Spotify authorization.");
+            setShowErrorPopup(true);
+          }
+          return;
+        }
+
+        setSuccessMessage("");
+        setShowSuccessPopup(false);
+        setErrorMessage(error.message || "Spotify authorization failed.");
+        setShowErrorPopup(true);
+        return;
+      }
+
+      if (!token) {
+        setSuccessMessage("");
+        setShowSuccessPopup(false);
+        setErrorMessage("Please authorize Spotify to save your playlist.");
+        setShowErrorPopup(true);
+        try {
+          await Spotify.authorize();
+          } catch (authError) {
+            console.error("Authorize error:", authError);
+            setErrorMessage("Could not start Spotify authorization.");
+            setShowErrorPopup(true);
+            }
+            return;
+            }
+
     const trackUris = playlistTracks.map((track) => track.uri);
     
     try {
@@ -108,6 +200,7 @@ function App() {
         "Content-Type": "application/json",
       },
     });
+
     if (!userResponse.ok) throw new Error("Failed to get user");
 
     const userData = await userResponse.json();
@@ -120,11 +213,12 @@ function App() {
       "Content-Type": "application/json"
       },
       body: JSON.stringify({
-      name: playlistName,
+      name: trimmedPlaylistName,
       description: "Created with Jamming App",
       public: false
     })
     });
+
     if (!playlistResponse.ok) throw new Error("Failed to create playlist");
     
     const playlistData = await playlistResponse.json();
@@ -140,16 +234,23 @@ function App() {
         uris: trackUris,
       }),
     });
+
     if (!addTrackResponse.ok) {
       throw new Error("Failed to add tracks to playlist");
     };
 
-  // reset app playlist
-  setPlaylistName('My Playlist');
-  setPlaylistTracks([]);
+    setSuccessMessage(`Playlist "${trimmedPlaylistName}" was saved to Spotify.`);
+    setShowSuccessPopup(true);
+    // reset app playlist
+    setPlaylistName('My Playlist');
+    setPlaylistTracks([]);
   }
   catch (error) {
   console.error("Save Playlist Error:", error.message);
+  setSuccessMessage("");
+  setShowSuccessPopup(false);
+  setErrorMessage("Could not save playlist to Spotify. Please try again.");
+  setShowErrorPopup(true);
   }
   };
 
@@ -169,6 +270,15 @@ function App() {
             <button onClick={() => setShowErrorPopup(false)}>Close</button>
           </div>
         </div>
+      )}
+
+      {showSuccessPopup && (
+        <div className="modal-overlay">
+          <div className="modal-window">
+            <p>{successMessage}</p>
+            <button onClick={() => setShowSuccessPopup(false)}>Close</button>
+          </div>
+        </div>  
       )}
 
       <div className="main-layout-container">

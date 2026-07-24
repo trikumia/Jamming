@@ -22,6 +22,7 @@ function SearchBar(props) {
         placeholder='Enter A Song, Artist, or Album'
         />
         <button
+        type="button"
         className='search-button'
         onClick={handleSearch}
         >SEARCH</button>
