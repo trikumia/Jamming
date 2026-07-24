@@ -1,9 +1,9 @@
 import React, {useState } from "react";
-import SearchBar from "./Components/SearchBar";
-import SearchResults from "./Components/SearchResults";
-import Playlist from "./Components/Playlist";
+import SearchBar from "../SearcBar/SearchBar";
+import SearchResults from "../SearchResults/SearchResults";
+import Playlist from "../Playlist/Playlist";
 import "./App.css";
-import * as Spotify from "./Spotify";
+import * as Spotify from "../../Spotify";
 
 function App() {
   const [playlistName, setPlaylistName] = useState('My Playlist');

@@ -1,0 +1,9 @@
+.results-container {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(79, 22, 79, 0.7);
+    padding-left: 20px;
+    
+}
